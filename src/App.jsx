@@ -368,11 +368,11 @@ export default function App() {
         const voteData = { email: user.email, postcode: user.postcode, selected_issues: [...sel], quarter: CURRENT_QUARTER };
         // Upsert — insert or update if email already exists
         const existing = votes.find(v => v.email === user.email);
-        if (existing) {
-          await dbUpdate("votes", `email=eq.${encodeURIComponent(user.email)}`, { selected_issues: [...sel] });
-        } else {
-          await dbInsert("votes", voteData);
-        }
+await sb(`votes?on_conflict=email`, {
+  method: "POST",
+  body: JSON.stringify(voteData),
+  headers: { "Prefer": "resolution=merge-duplicates,return=representation" }
+});
         // Reload votes
         const newVotes = await dbGet("votes", `quarter=eq.${CURRENT_QUARTER}`);
         const v = newVotes || [];
